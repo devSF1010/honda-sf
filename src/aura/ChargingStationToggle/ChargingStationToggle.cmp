@@ -1,0 +1,18 @@
+<aura:component implements="flexipage:availableForAllPageTypes,force:hasRecordId" controller="ChargingStationController">
+    
+    <aura:attribute name="recordId" type="string"/>
+    <aura:attribute name="ChargingToggle" type="Boolean"/>
+    <aura:attribute name="showSpinner" type="Boolean"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"></aura:handler>
+    
+    <aura:if isTrue="{!v.showSpinner}">
+        <lightning:spinner alternativeText="Loading" size="medium" />
+    </aura:if>
+    <lightning:card title="Charging Station">
+        <div style="padding:15px">
+            <lightning:input type="toggle" 
+                             label="Charging" name="input1" checked="{!v.ChargingToggle}"
+                             onchange="{!c.handleChargingToggle}"/>
+        </div>
+    </lightning:card>
+</aura:component>
