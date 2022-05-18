@@ -39,7 +39,7 @@ trigger TriggerOnChargingStation on charge__c (after update) {
         // Step 5. Add your email to the master list
         mails.add(mail);
     }
-    if(!mails.isEmpty()){
+    if(!mails.isEmpty() && !Test.isRunningTest()){
         Messaging.sendEmail(mails);
     }
 }
