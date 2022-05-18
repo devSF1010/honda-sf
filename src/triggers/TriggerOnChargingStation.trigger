@@ -1,13 +1,20 @@
 trigger TriggerOnChargingStation on charge__c (after update) {
-    
-    Map<Id,Contact> contactIdToData = new Map<Id,Contact>();
+    Set<Id> contactIds = new Set<Id>();
+    for(charge__c data:Trigger.new){
+        if(data.Contact__c <> null &&
+           data.Start_Time__c <> null && data.End_Time__c <> null && Trigger.oldMap.get(data.Id).End_Time__c == null){
+               contactIds.add(data.Contact__c);
+           }
+    }
+    if(contactIds.isEmpty()) return;
+    Map<Id,Contact> contactIdToData = new Map<Id,Contact>([SELECT Id,card_value__c FROM Contact WHERE Id IN:contactIds]);
     Map<Id,Decimal> contactIdToChargeDue = new Map<Id,Decimal>();
     for(charge__c data:Trigger.new){
-        if(data.Start_Time__c <> null && data.End_Time__c <> null && Trigger.oldMap.get(data.Id).End_Time__c == null){
-            Contact con = new Contact(Id=data.contact__c,card_value__c=0);
-            if(contactIdToData.containsKey(data.contact__c)){
-                con = contactIdToData.get(data.contact__c); 
-            }  
+        if(data.Contact__c <> null &&
+           data.Start_Time__c <> null && data.End_Time__c <> null && Trigger.oldMap.get(data.Id).End_Time__c == null)
+        {
+            Contact con = contactIdToData.get(data.contact__c); 
+            con.card_value__c = con.card_value__c <> null ? con.card_value__c : 0;
             con.card_value__c = con.card_value__c - data.Cost__c;
             contactIdToData.put(data.contact__c,con);
             if(!contactIdToChargeDue.containsKey(data.contact__c)){
@@ -16,7 +23,6 @@ trigger TriggerOnChargingStation on charge__c (after update) {
             contactIdToChargeDue.put(data.contact__c,contactIdToChargeDue.get(data.contact__c) + data.Cost__c);
         }
     }
-    if(contactIdToData.keySet().isEmpty()) return;
     UPDATE contactIdToData.values();
     List<Messaging.SingleEmailMessage> mails = new List<Messaging.SingleEmailMessage>();
     for(Contact myContact:[SELECT Id,Name,Email,card_value__c FROM Contact WHERE Id IN:contactIdToData.keySet()]){
